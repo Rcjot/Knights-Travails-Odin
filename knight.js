@@ -137,8 +137,11 @@ const chessBoard = (function () {
           bestPath = path;
         }
       }
-      console.log(bestPath);
-      console.log(step);
+      console.log(`You made it in ${step} moves! Here's your path:`);
+      for (let square of bestPath) {
+        console.log(square);
+      }
+
       return;
     } else {
       knightMoves(queue[0].start, end, queue, traversed, pathArr);
