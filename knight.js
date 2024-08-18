@@ -13,8 +13,8 @@ const chessBoard = (function () {
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
         Board[i][j] = Board[i][j].concat(pushPossibleEnds(i, j));
-        console.log(`[${i}][${j}]`);
-        console.log(Board[i][j]);
+        // console.log(`[${i}][${j}]`);
+        // console.log(Board[i][j]);
       }
     }
   }
@@ -36,14 +36,14 @@ const chessBoard = (function () {
     for (let coord = 0; coord < 2; coord++) {
       for (let func of incrementFunc) {
         const num = func(x, increment[coord]);
-        if (num >= 0) iArrEnds[coord].push(num);
+        if (num >= 0 && num <= 7) iArrEnds[coord].push(num);
       }
     }
     //push possible y values, y[0] : +- 1; y[1] +- 2;
     for (let coord = 0; coord < 2; coord++) {
       for (let func of incrementFunc) {
         const num = func(y, increment[coord]);
-        if (num >= 0) jArrEnds[coord].push(num);
+        if (num >= 0 && num <= 7) jArrEnds[coord].push(num);
       }
     }
     // for each iArrEnds[0] pair with jArrEnds[1];
@@ -66,40 +66,89 @@ const chessBoard = (function () {
     return possibleEnds;
   }
 
-  function knightMoves(
-    start,
-    end,
-    queue = [],
-    traversed = [],
-    stepArr = [],
-    step = 0
-  ) {
+  class queueItem {
+    constructor(start, traversed, step) {
+      this.start = start;
+      this.x1 = start[0];
+      this.y1 = start[1];
+
+      this.traversed = traversed;
+      this.step = step;
+    }
+
+    addStep() {
+      return this.step + 1;
+    }
+
+    addTraverse(square) {
+      let tempTraversed = this.traversed.slice();
+      tempTraversed.push(square);
+      return tempTraversed;
+    }
+  }
+
+  function knightMoves(start, end, queue = [], traversed = [], pathArr = []) {
     console.log("start");
-    let x1 = start[0];
-    let y1 = start[1];
+
     let x2 = end[0];
     let y2 = end[1];
-    const startArr = [x1, y1];
-    const possibleDests = Board[x1][y1];
-    queue.push(startArr);
-    console.log(queue);
-    console.log("a");
+    const startSquare = start;
+    let myQueueItem;
+    if (traversed.length === 0) {
+      myQueueItem = new queueItem(start, [start], 0);
+      queue.push(myQueueItem);
+    }
 
-    const dequeued = Board[queue[0][0]][queue[0][1]];
+    traversed.push(startSquare);
 
+    console.log(queue[0]);
+    console.log(traversed);
+
+    const dequeued = Board[queue[0].x1][queue[0].y1];
+    const dequeuedItem = queue[0];
     queue.shift();
 
     for (let square of dequeued) {
-      if (square[0] === x2 && square[1] === y2) {
+      console.log(square);
+      if (traversed.includes(square)) {
+      } else if (
+        (square[0] === x2 && square[1] === y2) ||
+        dequeuedItem.step === 5
+      ) {
+        const updatedTraverse = dequeuedItem.addTraverse(square);
+        updatedTraverse.push(dequeuedItem.addStep());
+        pathArr.push(updatedTraverse);
       } else {
-        queue.push(square);
+        const updatedTraverse = dequeuedItem.addTraverse(square);
+        const step = dequeuedItem.addStep();
+        const childQueueItem = new queueItem(square, updatedTraverse, step);
+        queue.push(childQueueItem);
       }
     }
+    console.log(queue.length);
+    if (queue.length === 0) {
+      let bestPath;
+      let step = 10;
+      for (let path of pathArr) {
+        let pathStep = path[path.length - 1];
+        if (pathStep < step) {
+          step = pathStep;
+          bestPath = path;
+        }
+      }
+      console.log(bestPath);
+      console.log(step);
+      return;
+    } else {
+      knightMoves(queue[0].start, end, queue, traversed, pathArr);
+    }
+    // console.log(queue);
+    // console.log("traversed:");
+    // console.log(traversed);
 
-    console.log(queue);
     /**
      * for each path from start, check whether it contains end,
-     * else queue the path
+     * else enqueue the path
      */
   }
 
@@ -111,4 +160,4 @@ const chessBoard = (function () {
 
 // function knightMoves(start, end) {}
 chessBoard.populateBoard();
-chessBoard.knightMoves([3, 3], [5, 2]);
+chessBoard.knightMoves([3, 3], [4, 3]);
